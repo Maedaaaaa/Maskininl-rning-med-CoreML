@@ -1,0 +1,27 @@
+import SwiftUI
+
+struct ContentView: View {
+    var fruits = ["Apelsin", "Banan", "Citron"]
+    
+    var body: some View {
+        NavigationView {
+            List(fruits, id: \.self) { fruit in
+                NavigationLink(destination: FruitView(fruitName: fruit)) {
+                    Text(fruit)
+                }
+            }
+            .navigationTitle("Fruits")
+        }
+    }
+}
+
+struct FruitView: View {
+    var fruitName: String
+    
+    var body: some View {
+        Text("\(fruitName)")
+            .font(.largeTitle)
+            .padding()
+    }
+}
+
