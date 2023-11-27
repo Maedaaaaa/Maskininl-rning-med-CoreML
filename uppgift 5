@@ -1,0 +1,111 @@
+ContentView
+
+import SwiftUI
+
+struct ContentView: View {
+    @State private var resultText: String = ""
+
+    var body: some View {
+        VStack {
+            Button(action: {
+                classifyCustomImage()
+            }) {
+                Text("Classify Elephent")
+                    .padding()
+                    .foregroundColor(.white)
+                    .background(Color.orange)
+                    .cornerRadius(10)
+            }
+
+            Text(resultText)
+                .padding()
+        }
+    }
+
+    func classifyCustomImage() {
+        if let image = UIImage(named: "baby") {
+            let domodel = DoModel()
+            domodel.doImage(image: image) { result in
+                DispatchQueue.main.async {
+                    self.resultText = result
+                }
+            }
+        }
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
+
+
+
+DoModel:
+
+
+
+import Vision
+import CoreML
+import Foundation
+import UIKit
+
+class DoModel {
+    func doImage(image: UIImage, completion: @escaping (String) -> Void) {
+        let defaultConfig = MLModelConfiguration()
+
+        if let imageClassifierWrapper = try? MobileNet(configuration: defaultConfig) {
+            let imageBuffer = buffer(from: image)!
+
+            do {
+                let output = try imageClassifierWrapper.prediction(image: imageBuffer)
+
+                let result = "\(output.classLabel): \(output.classLabelProbs[output.classLabel]! * 100)%"
+                completion(result)
+
+            } catch {
+                completion("Error classifying image.")
+            }
+        } else {
+            completion("Error loading model.")
+        }
+    }
+
+    func buffer(from image: UIImage) -> CVPixelBuffer? {
+        let attrs = [
+            kCVPixelBufferCGImageCompatibilityKey: kCFBooleanTrue,
+            kCVPixelBufferCGBitmapContextCompatibilityKey: kCFBooleanTrue
+        ] as CFDictionary
+
+        var pixelBuffer: CVPixelBuffer?
+        let status = CVPixelBufferCreate(kCFAllocatorDefault, Int(image.size.width), Int(image.size.height), kCVPixelFormatType_32ARGB, attrs, &pixelBuffer)
+
+        guard let buffer = pixelBuffer, status == kCVReturnSuccess else {
+            return nil
+        }
+
+        CVPixelBufferLockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: 0))
+        let context = CGContext(data: CVPixelBufferGetBaseAddress(buffer),
+                                width: Int(image.size.width),
+                                height: Int(image.size.height),
+                                bitsPerComponent: 8,
+                                bytesPerRow: CVPixelBufferGetBytesPerRow(buffer),
+                                space: CGColorSpaceCreateDeviceRGB(),
+                                bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)
+
+        guard let cgImage = image.cgImage, let cgContext = context else {
+            return nil
+        }
+
+        cgContext.draw(cgImage, in: CGRect(origin: .zero, size: image.size))
+        CVPixelBufferUnlockBaseAddress(buffer, CVPixelBufferLockFlags(rawValue: 0))
+
+        return buffer
+    }
+}
+
+
+Assets:
+
+(På grund av jag har skrivt igen på samma file som uppgift4 kunde inte ladda ner nya file igen här. Men här finns en bild av en elephent). 
